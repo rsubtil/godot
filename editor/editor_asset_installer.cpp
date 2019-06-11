@@ -109,13 +109,13 @@ void EditorAssetInstaller::open(const String &p_path, int p_depth) {
 		ret = unzGoToNextFile(pkg);
 	}
 
-	Map<String, Ref<Texture> > extension_guess;
+	Map<String, Ref<Texture2D> > extension_guess;
 	{
-		extension_guess["png"] = get_icon("Texture", "EditorIcons");
-		extension_guess["jpg"] = get_icon("Texture", "EditorIcons");
-		extension_guess["tex"] = get_icon("Texture", "EditorIcons");
-		extension_guess["atlastex"] = get_icon("Texture", "EditorIcons");
-		extension_guess["dds"] = get_icon("Texture", "EditorIcons");
+		extension_guess["png"] = get_icon("Texture2D", "EditorIcons");
+		extension_guess["jpg"] = get_icon("Texture2D", "EditorIcons");
+		extension_guess["tex"] = get_icon("Texture2D", "EditorIcons");
+		extension_guess["atlastex"] = get_icon("Texture2D", "EditorIcons");
+		extension_guess["dds"] = get_icon("Texture2D", "EditorIcons");
 		extension_guess["scn"] = get_icon("PackedScene", "EditorIcons");
 		extension_guess["tscn"] = get_icon("PackedScene", "EditorIcons");
 		extension_guess["xml"] = get_icon("PackedScene", "EditorIcons");
@@ -125,7 +125,7 @@ void EditorAssetInstaller::open(const String &p_path, int p_depth) {
 		extension_guess["gd"] = get_icon("GDScript", "EditorIcons");
 	}
 
-	Ref<Texture> generic_extension = get_icon("Object", "EditorIcons");
+	Ref<Texture2D> generic_extension = get_icon("Object", "EditorIcons");
 
 	unzClose(pkg);
 

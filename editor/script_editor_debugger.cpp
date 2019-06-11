@@ -471,7 +471,7 @@ void ScriptEditorDebugger::_parse_message(const String &p_msg, const Array &p_da
 			ObjectID id = ObjectID(p_data[i + 3]);
 
 			it->set_text(0, p_data[i + 1]);
-			Ref<Texture> icon = EditorNode::get_singleton()->get_class_icon(p_data[i + 2], "");
+			Ref<Texture2D> icon = EditorNode::get_singleton()->get_class_icon(p_data[i + 2], "");
 			if (icon.is_valid())
 				it->set_icon(0, icon);
 			it->set_metadata(0, id);
@@ -1105,8 +1105,8 @@ void ScriptEditorDebugger::_notification(int p_what) {
 				if (error_count == 0 && warning_count == 0) {
 					errors_tab->set_name(TTR("Errors"));
 					debugger_button->set_text(TTR("Debugger"));
-					debugger_button->set_icon(Ref<Texture>());
-					tabs->set_tab_icon(errors_tab->get_index(), Ref<Texture>());
+					debugger_button->set_icon(Ref<Texture2D>());
+					tabs->set_tab_icon(errors_tab->get_index(), Ref<Texture2D>());
 				} else {
 					errors_tab->set_name(TTR("Errors") + " (" + itos(error_count + warning_count) + ")");
 					debugger_button->set_text(TTR("Debugger") + " (" + itos(error_count + warning_count) + ")");

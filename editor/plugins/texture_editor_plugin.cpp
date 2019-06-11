@@ -49,7 +49,7 @@ void TextureEditor::_notification(int p_what) {
 
 	if (p_what == NOTIFICATION_DRAW) {
 
-		Ref<Texture> checkerboard = get_icon("Checkerboard", "EditorIcons");
+		Ref<Texture2D> checkerboard = get_icon("Checkerboard", "EditorIcons");
 		Size2 size = get_size();
 
 		draw_texture_rect(checkerboard, Rect2(Point2(), size), true);
@@ -113,7 +113,7 @@ void TextureEditor::_changed_callback(Object *p_changed, const char *p_prop) {
 	update();
 }
 
-void TextureEditor::edit(Ref<Texture> p_texture) {
+void TextureEditor::edit(Ref<Texture2D> p_texture) {
 
 	if (!texture.is_null())
 		texture->remove_change_receptor(this);
@@ -151,11 +151,11 @@ bool EditorInspectorPluginTexture::can_handle(Object *p_object) {
 
 void EditorInspectorPluginTexture::parse_begin(Object *p_object) {
 
-	Texture *texture = Object::cast_to<Texture>(p_object);
+	Texture2D *texture = Object::cast_to<Texture2D>(p_object);
 	if (!texture) {
 		return;
 	}
-	Ref<Texture> m(texture);
+	Ref<Texture2D> m(texture);
 
 	TextureEditor *editor = memnew(TextureEditor);
 	editor->edit(m);

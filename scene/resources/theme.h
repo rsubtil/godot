@@ -49,7 +49,7 @@ class Theme : public Resource {
 	static Ref<Theme> default_theme;
 	void _emit_theme_changed();
 
-	HashMap<StringName, HashMap<StringName, Ref<Texture> > > icon_map;
+	HashMap<StringName, HashMap<StringName, Ref<Texture2D> > > icon_map;
 	HashMap<StringName, HashMap<StringName, Ref<StyleBox> > > style_map;
 	HashMap<StringName, HashMap<StringName, Ref<Font> > > font_map;
 	HashMap<StringName, HashMap<StringName, Ref<Shader> > > shader_map;
@@ -61,7 +61,7 @@ protected:
 	bool _get(const StringName &p_name, Variant &r_ret) const;
 	void _get_property_list(List<PropertyInfo> *p_list) const;
 
-	static Ref<Texture> default_icon;
+	static Ref<Texture2D> default_icon;
 	static Ref<StyleBox> default_style;
 	static Ref<Font> default_font;
 
@@ -137,15 +137,15 @@ public:
 	static Ref<Theme> get_default();
 	static void set_default(const Ref<Theme> &p_default);
 
-	static void set_default_icon(const Ref<Texture> &p_icon);
+	static void set_default_icon(const Ref<Texture2D> &p_icon);
 	static void set_default_style(const Ref<StyleBox> &p_style);
 	static void set_default_font(const Ref<Font> &p_font);
 
 	void set_default_theme_font(const Ref<Font> &p_default_font);
 	Ref<Font> get_default_theme_font() const;
 
-	void set_icon(const StringName &p_name, const StringName &p_type, const Ref<Texture> &p_icon);
-	Ref<Texture> get_icon(const StringName &p_name, const StringName &p_type) const;
+	void set_icon(const StringName &p_name, const StringName &p_type, const Ref<Texture2D> &p_icon);
+	Ref<Texture2D> get_icon(const StringName &p_name, const StringName &p_type) const;
 	bool has_icon(const StringName &p_name, const StringName &p_type) const;
 	void clear_icon(const StringName &p_name, const StringName &p_type);
 	void get_icon_list(StringName p_type, List<StringName> *p_list) const;

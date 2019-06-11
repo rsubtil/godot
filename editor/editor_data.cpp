@@ -479,7 +479,7 @@ EditorPlugin *EditorData::get_editor_plugin(int p_idx) {
 	return editor_plugins[p_idx];
 }
 
-void EditorData::add_custom_type(const String &p_type, const String &p_inherits, const Ref<Script> &p_script, const Ref<Texture> &p_icon) {
+void EditorData::add_custom_type(const String &p_type, const String &p_inherits, const Ref<Script> &p_script, const Ref<Texture2D> &p_icon) {
 
 	ERR_FAIL_COND(p_script.is_null());
 	CustomType ct;
@@ -499,7 +499,7 @@ Object *EditorData::instance_custom_type(const String &p_type, const String &p_i
 
 		for (int i = 0; i < get_custom_types()[p_inherits].size(); i++) {
 			if (get_custom_types()[p_inherits][i].name == p_type) {
-				Ref<Texture> icon = get_custom_types()[p_inherits][i].icon;
+				Ref<Texture2D> icon = get_custom_types()[p_inherits][i].icon;
 				Ref<Script> script = get_custom_types()[p_inherits][i].script;
 
 				Object *ob = ClassDB::instance(p_inherits);
