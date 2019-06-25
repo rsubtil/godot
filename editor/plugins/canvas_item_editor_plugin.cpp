@@ -2889,8 +2889,7 @@ void CanvasItemEditor::_draw_selection() {
 				transform.xform(drag_rotation_center),
 				transform.xform(drag_to),
 				get_color("accent_color", "Editor") * Color(1, 1, 1, 0.6),
-				Math::round(2 * EDSCALE),
-				true);
+				Math::round(2 * EDSCALE));
 	}
 }
 
