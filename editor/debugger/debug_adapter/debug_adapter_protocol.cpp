@@ -139,7 +139,6 @@ String DAPeer::format_output(const Dictionary &p_params) const {
 
 Error DebugAdapterProtocol::on_client_connected() {
 	ERR_FAIL_COND_V_MSG(clients.size() >= DAP_MAX_CLIENTS, FAILED, "Max client limits reached");
-
 	Ref<StreamPeerTCP> tcp_peer = server->take_connection();
 	tcp_peer->set_no_delay(true);
 	Ref<DAPeer> peer = memnew(DAPeer);
