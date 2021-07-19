@@ -2318,12 +2318,7 @@ void EditorNode::_run(bool p_current, const String &p_custom) {
 	editor_data.get_editor_breakpoints(&breakpoints);
 
 	args = ProjectSettings::get_singleton()->get("editor/run/main_run_args");
-	DebugAdapterProtocol *dap = DebugAdapterProtocol::get_singleton();
-	if (dap->is_active() && dap->get_current_request() == "launch") {
-		skip_breakpoints = dap->get_current_args().get("noDebug", false);
-	} else {
-		skip_breakpoints = EditorDebuggerNode::get_singleton()->is_skip_breakpoints();
-	}
+	skip_breakpoints = EditorDebuggerNode::get_singleton()->is_skip_breakpoints();
 
 	EditorDebuggerNode::get_singleton()->start();
 	Error error = editor_run.run(run_filename, args, breakpoints, skip_breakpoints);
