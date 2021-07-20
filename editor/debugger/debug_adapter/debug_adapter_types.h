@@ -119,10 +119,14 @@ struct Breakpoint {
 
 struct BreakpointLocation {
 	int line;
+	int endLine = -1;
 
 	_FORCE_INLINE_ Dictionary to_json() const {
 		Dictionary dict;
 		dict["line"] = line;
+		if (endLine >= 0) {
+			dict["endLine"] = endLine;
+		}
 
 		return dict;
 	}

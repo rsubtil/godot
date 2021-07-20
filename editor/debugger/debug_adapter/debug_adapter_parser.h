@@ -71,6 +71,7 @@ public:
 	Dictionary req_threads(const Dictionary &p_params) const;
 	Dictionary req_stackTrace(const Dictionary &p_params) const;
 	Dictionary req_setBreakpoints(const Dictionary &p_params);
+	Dictionary req_breakpointLocations(const Dictionary &p_params) const;
 	Dictionary req_scopes(const Dictionary &p_params);
 	Dictionary req_variables(const Dictionary &p_params) const;
 	Dictionary req_next(const Dictionary &p_params) const;

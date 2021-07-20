@@ -47,6 +47,7 @@ void DebugAdapterParser::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("req_threads", "params"), &DebugAdapterParser::req_threads);
 	ClassDB::bind_method(D_METHOD("req_stackTrace", "params"), &DebugAdapterParser::req_stackTrace);
 	ClassDB::bind_method(D_METHOD("req_setBreakpoints", "params"), &DebugAdapterParser::req_setBreakpoints);
+	ClassDB::bind_method(D_METHOD("req_breakpointLocations", "params"), &DebugAdapterParser::req_breakpointLocations);
 	ClassDB::bind_method(D_METHOD("req_scopes", "params"), &DebugAdapterParser::req_scopes);
 	ClassDB::bind_method(D_METHOD("req_variables", "params"), &DebugAdapterParser::req_variables);
 	ClassDB::bind_method(D_METHOD("req_next", "params"), &DebugAdapterParser::req_next);
@@ -261,6 +262,23 @@ Dictionary DebugAdapterParser::req_setBreakpoints(const Dictionary &p_params) {
 	Array updated_breakpoints = DebugAdapterProtocol::get_singleton()->update_breakpoints(source.path, lines);
 	body["breakpoints"] = updated_breakpoints;
 
+	return response;
+}
+
+Dictionary DebugAdapterParser::req_breakpointLocations(const Dictionary &p_params) const {
+	Dictionary response = prepare_success_response(p_params), body;
+	response["body"] = body;
+	Dictionary args = p_params["arguments"];
+
+	Array locations;
+	DAP::BreakpointLocation location;
+	location.line = args["line"];
+	if (args.has("endLine")) {
+		location.endLine = args["endLine"];
+	}
+	locations.push_back(location.to_json());
+
+	body["breakpoints"] = locations;
 	return response;
 }
 
