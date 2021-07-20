@@ -63,6 +63,8 @@ public:
 	// Requests
 	Dictionary req_initialize(const Dictionary &p_params) const;
 	Dictionary req_launch(const Dictionary &p_params);
+	Dictionary req_disconnect(const Dictionary &p_params) const;
+	Dictionary req_attach(const Dictionary &p_params);
 	Dictionary req_terminate(const Dictionary &p_params) const;
 	Dictionary req_pause(const Dictionary &p_params) const;
 	Dictionary req_continue(const Dictionary &p_params) const;

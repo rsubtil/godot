@@ -38,7 +38,8 @@ namespace DAP {
 
 enum ErrorType {
 	UNKNOWN,
-	WRONG_PATH
+	WRONG_PATH,
+	NOT_RUNNING
 };
 
 struct Checksum {

@@ -37,8 +37,9 @@
 void DebugAdapterParser::_bind_methods() {
 	// Requests
 	ClassDB::bind_method(D_METHOD("req_initialize", "params"), &DebugAdapterParser::req_initialize);
-	ClassDB::bind_method(D_METHOD("req_disconnect", "params"), &DebugAdapterParser::prepare_success_response);
+	ClassDB::bind_method(D_METHOD("req_disconnect", "params"), &DebugAdapterParser::req_disconnect);
 	ClassDB::bind_method(D_METHOD("req_launch", "params"), &DebugAdapterParser::req_launch);
+	ClassDB::bind_method(D_METHOD("req_attach", "params"), &DebugAdapterParser::req_attach);
 	ClassDB::bind_method(D_METHOD("req_terminate", "params"), &DebugAdapterParser::req_terminate);
 	ClassDB::bind_method(D_METHOD("req_configurationDone", "params"), &DebugAdapterParser::prepare_success_response);
 	ClassDB::bind_method(D_METHOD("req_pause", "params"), &DebugAdapterParser::req_pause);
@@ -80,13 +81,19 @@ Dictionary DebugAdapterParser::prepare_error_response(const Dictionary &p_params
 	DAP::Message message;
 	String error, error_desc;
 	switch (err_type) {
-		case DAP::ErrorType::UNKNOWN:
-			error = "unknown";
-			error_desc = "An unknown error has ocurred when processing the request.";
-			break;
 		case DAP::ErrorType::WRONG_PATH:
 			error = "wrong_path";
 			error_desc = "The editor and client are working on different paths; the client is on \"{clientPath}\", but the editor is on \"{editorPath}\"";
+			break;
+		case DAP::ErrorType::NOT_RUNNING:
+			error = "not_running";
+			error_desc = "Can't attach to a running session since there isn't one.";
+			break;
+		case DAP::ErrorType::UNKNOWN:
+		default:
+			error = "unknown";
+			error_desc = "An unknown error has ocurred when processing the request.";
+			break;
 	}
 
 	message.id = err_type;
@@ -117,6 +124,14 @@ Dictionary DebugAdapterParser::req_initialize(const Dictionary &p_params) const 
 	return response;
 }
 
+Dictionary DebugAdapterParser::req_disconnect(const Dictionary &p_params) const {
+	if (!DebugAdapterProtocol::get_singleton()->get_current_peer()->attached) {
+		EditorNode::get_singleton()->run_stop();
+	}
+
+	return prepare_success_response(p_params);
+}
+
 Dictionary DebugAdapterParser::req_launch(const Dictionary &p_params) {
 	Dictionary args = p_params["arguments"];
 	if (args.has("project") && !is_valid_path(args["project"])) {
@@ -132,8 +147,20 @@ Dictionary DebugAdapterParser::req_launch(const Dictionary &p_params) {
 	}
 
 	EditorNode::get_singleton()->run_play();
+	DebugAdapterProtocol::get_singleton()->get_current_peer()->attached = false;
 	DebugAdapterProtocol::get_singleton()->notify_process();
 
+	return prepare_success_response(p_params);
+}
+
+Dictionary DebugAdapterParser::req_attach(const Dictionary &p_params) {
+	ScriptEditorDebugger *dbg = EditorDebuggerNode::get_singleton()->get_default_debugger();
+	if (!dbg->is_session_active()) {
+		return prepare_error_response(p_params, DAP::ErrorType::NOT_RUNNING);
+	}
+
+	DebugAdapterProtocol::get_singleton()->get_current_peer()->attached = true;
+	DebugAdapterProtocol::get_singleton()->notify_process();
 	return prepare_success_response(p_params);
 }
 

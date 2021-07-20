@@ -59,6 +59,9 @@ struct DAPeer : RefCounted {
 	bool supportsVariableType = false;
 	bool supportsInvalidatedEvent = false;
 
+	// Internal client info
+	bool attached = false;
+
 	Error handle_data();
 	Error send_data();
 	String format_output(const Dictionary &p_params) const;
