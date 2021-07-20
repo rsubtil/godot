@@ -318,7 +318,14 @@ Dictionary DebugAdapterParser::req_variables(const Dictionary &p_params) const {
 	int variable_id = args["variablesReference"];
 
 	Map<int, Array>::Element *E = DebugAdapterProtocol::get_singleton()->variable_list.find(variable_id);
+
 	if (E) {
+		if (!DebugAdapterProtocol::get_singleton()->get_current_peer()->supportsVariableType) {
+			for (int i = 0; i < E->value().size(); i++) {
+				Dictionary variable = E->value()[i];
+				variable.erase("type");
+			}
+		}
 		body["variables"] = E ? E->value() : Array();
 		return response;
 	} else {
