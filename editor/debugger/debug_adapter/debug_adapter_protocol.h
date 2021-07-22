@@ -93,6 +93,8 @@ private:
 	void reset_ids();
 	void reset_stack_info();
 
+	int parse_variant(const Variant &p_var);
+
 	bool _initialized = false;
 	bool _processing_breakpoint = false;
 	bool _stepping = false;
