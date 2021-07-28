@@ -40,6 +40,7 @@ void DebugAdapterParser::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("req_disconnect", "params"), &DebugAdapterParser::req_disconnect);
 	ClassDB::bind_method(D_METHOD("req_launch", "params"), &DebugAdapterParser::req_launch);
 	ClassDB::bind_method(D_METHOD("req_attach", "params"), &DebugAdapterParser::req_attach);
+	ClassDB::bind_method(D_METHOD("req_restart", "params"), &DebugAdapterParser::req_restart);
 	ClassDB::bind_method(D_METHOD("req_terminate", "params"), &DebugAdapterParser::req_terminate);
 	ClassDB::bind_method(D_METHOD("req_configurationDone", "params"), &DebugAdapterParser::prepare_success_response);
 	ClassDB::bind_method(D_METHOD("req_pause", "params"), &DebugAdapterParser::req_pause);
@@ -162,6 +163,22 @@ Dictionary DebugAdapterParser::req_attach(const Dictionary &p_params) {
 
 	DebugAdapterProtocol::get_singleton()->get_current_peer()->attached = true;
 	DebugAdapterProtocol::get_singleton()->notify_process();
+	return prepare_success_response(p_params);
+}
+
+Dictionary DebugAdapterParser::req_restart(const Dictionary &p_params) {
+	// Extract embedded "arguments" so it can be given to req_launch/req_attach
+	Dictionary params = p_params, args;
+	args = params["arguments"];
+	args = args["arguments"];
+	params["arguments"] = args;
+
+	Dictionary response = DebugAdapterProtocol::get_singleton()->get_current_peer()->attached ? req_attach(params) : req_launch(params);
+	if (!response["success"]) {
+		response["command"] = p_params["command"];
+		return response;
+	}
+
 	return prepare_success_response(p_params);
 }
 

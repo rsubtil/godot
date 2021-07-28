@@ -653,7 +653,7 @@ void DebugAdapterProtocol::notify_initialized() {
 }
 
 void DebugAdapterProtocol::notify_process() {
-	String launch_mode = _current_request.is_empty() ? "launch" : _current_request;
+	String launch_mode = _current_peer->attached ? "attach" : "launch";
 
 	Dictionary event = parser->ev_process(launch_mode);
 	for (List<Ref<DAPeer>>::Element *E = clients.front(); E; E = E->next()) {
@@ -664,7 +664,7 @@ void DebugAdapterProtocol::notify_process() {
 void DebugAdapterProtocol::notify_terminated() {
 	Dictionary event = parser->ev_terminated();
 	for (List<Ref<DAPeer>>::Element *E = clients.front(); E; E = E->next()) {
-		if (_current_request == "launch" && _current_peer == E->get()) {
+		if ((_current_request == "launch" || _current_request == "restart") && _current_peer == E->get()) {
 			continue;
 		}
 		E->get()->res_queue.push_back(event);
@@ -674,7 +674,7 @@ void DebugAdapterProtocol::notify_terminated() {
 void DebugAdapterProtocol::notify_exited(const int &p_exitcode) {
 	Dictionary event = parser->ev_exited(p_exitcode);
 	for (List<Ref<DAPeer>>::Element *E = clients.front(); E; E = E->next()) {
-		if (_current_request == "launch" && _current_peer == E->get()) {
+		if ((_current_request == "launch" || _current_request == "restart") && _current_peer == E->get()) {
 			continue;
 		}
 		E->get()->res_queue.push_back(event);
