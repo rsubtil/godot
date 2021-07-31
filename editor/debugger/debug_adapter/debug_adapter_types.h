@@ -202,23 +202,6 @@ struct Scope {
 	}
 };
 
-struct Scope {
-	String name;
-	String presentationHint;
-	int variablesReference;
-	bool expensive;
-
-	_FORCE_INLINE_ Dictionary to_json() const {
-		Dictionary dict;
-		dict["name"] = name;
-		dict["presentationHint"] = presentationHint;
-		dict["variablesReference"] = variablesReference;
-		dict["expensive"] = expensive;
-
-		return dict;
-	}
-};
-
 struct SourceBreakpoint {
 	int line;
 

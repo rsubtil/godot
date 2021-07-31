@@ -57,8 +57,6 @@ protected:
 
 	Dictionary ev_stopped() const;
 
-	Dictionary ev_stopped() const;
-
 public:
 	// Requests
 	Dictionary req_initialize(const Dictionary &p_params) const;
