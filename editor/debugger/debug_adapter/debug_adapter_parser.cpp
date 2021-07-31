@@ -53,6 +53,7 @@ void DebugAdapterParser::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("req_variables", "params"), &DebugAdapterParser::req_variables);
 	ClassDB::bind_method(D_METHOD("req_next", "params"), &DebugAdapterParser::req_next);
 	ClassDB::bind_method(D_METHOD("req_stepIn", "params"), &DebugAdapterParser::req_stepIn);
+	ClassDB::bind_method(D_METHOD("req_evaluate", "params"), &DebugAdapterParser::req_evaluate);
 }
 
 Dictionary DebugAdapterParser::prepare_base_event() const {
@@ -384,6 +385,18 @@ Dictionary DebugAdapterParser::req_stepIn(const Dictionary &p_params) const {
 	DebugAdapterProtocol::get_singleton()->_stepping = true;
 
 	return prepare_success_response(p_params);
+}
+
+Dictionary DebugAdapterParser::req_evaluate(const Dictionary &p_params) const {
+	Dictionary response = prepare_success_response(p_params), body;
+	response["body"] = body;
+
+	Dictionary args = p_params["arguments"];
+
+	String value = EditorDebuggerNode::get_singleton()->get_var_value(args["expression"]);
+	body["result"] = value;
+
+	return response;
 }
 
 Dictionary DebugAdapterParser::ev_initialized() const {

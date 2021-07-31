@@ -77,6 +77,7 @@ public:
 	Dictionary req_variables(const Dictionary &p_params) const;
 	Dictionary req_next(const Dictionary &p_params) const;
 	Dictionary req_stepIn(const Dictionary &p_params) const;
+	Dictionary req_evaluate(const Dictionary &p_params) const;
 
 	// Events
 	Dictionary ev_initialized() const;
