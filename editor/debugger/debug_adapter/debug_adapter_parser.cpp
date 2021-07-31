@@ -91,6 +91,10 @@ Dictionary DebugAdapterParser::prepare_error_response(const Dictionary &p_params
 			error = "not_running";
 			error_desc = "Can't attach to a running session since there isn't one.";
 			break;
+		case DAP::ErrorType::TIMEOUT:
+			error = "timeout";
+			error_desc = "Timeout reached while processing a request.";
+			break;
 		case DAP::ErrorType::UNKNOWN:
 		default:
 			error = "unknown";

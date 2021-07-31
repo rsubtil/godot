@@ -52,6 +52,7 @@ struct DAPeer : RefCounted {
 	int content_length = 0;
 	List<Dictionary> res_queue;
 	int seq = 0;
+	uint64_t timestamp = 0;
 
 	// Client specific info
 	bool linesStartAt1 = false;
@@ -101,6 +102,7 @@ private:
 	bool _processing_stackdump = false;
 	int _remaining_vars = 0;
 	int _current_frame = 0;
+	uint64_t _request_timeout = 1000;
 
 	String _current_request;
 	Ref<DAPeer> _current_peer;
@@ -113,6 +115,8 @@ private:
 	Map<int, Array> variable_list;
 
 public:
+	friend class DebugAdapterServer;
+
 	_FORCE_INLINE_ static DebugAdapterProtocol *get_singleton() { return singleton; }
 	_FORCE_INLINE_ bool is_active() const { return _initialized && clients.size() > 0; }
 

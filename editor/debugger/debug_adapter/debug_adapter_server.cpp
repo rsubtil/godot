@@ -36,6 +36,7 @@
 
 DebugAdapterServer::DebugAdapterServer() {
 	_EDITOR_DEF("network/debug_adapter/remote_port", remote_port);
+	_EDITOR_DEF("network/debug_adapter/request_timeout", protocol._request_timeout);
 }
 
 void DebugAdapterServer::_notification(int p_what) {
@@ -56,6 +57,7 @@ void DebugAdapterServer::_notification(int p_what) {
 			}
 		} break;
 		case EditorSettings::NOTIFICATION_EDITOR_SETTINGS_CHANGED: {
+			protocol._request_timeout = EditorSettings::get_singleton()->get("network/debug_adapter/request_timeout");
 			int remote_port = (int)_EDITOR_GET("network/debug_adapter/remote_port");
 			if (remote_port != this->remote_port) {
 				this->stop();

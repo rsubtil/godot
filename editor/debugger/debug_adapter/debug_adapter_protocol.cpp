@@ -94,11 +94,17 @@ Error DAPeer::handle_data() {
 		String msg;
 		msg.parse_utf8((const char *)req_buf, req_pos);
 
+		// Apply a timestamp if it there's none yet
+		if (!timestamp) {
+			timestamp = OS::get_singleton()->get_ticks_msec();
+		}
+
 		// Response
 		if (DebugAdapterProtocol::get_singleton()->process_message(msg)) {
 			// Reset to read again
 			req_pos = 0;
 			has_header = false;
+			timestamp = 0;
 		}
 	}
 	return OK;
@@ -628,6 +634,12 @@ bool DebugAdapterProtocol::process_message(const String &p_text) {
 	Dictionary params = json.get_data();
 	bool completed = true;
 
+	if (OS::get_singleton()->get_ticks_msec() - _current_peer->timestamp > _request_timeout) {
+		Dictionary response = parser->prepare_error_response(params, DAP::ErrorType::TIMEOUT);
+		_current_peer->res_queue.push_front(response);
+		return true;
+	}
+
 	// Append "req_" to any command received; prevents name clash with existing functions, and possibly exploiting
 	String command = "req_" + (String)params["command"];
 	if (parser->has_method(command)) {
@@ -902,6 +914,7 @@ void DebugAdapterProtocol::poll() {
 }
 
 Error DebugAdapterProtocol::start(int p_port, const IPAddress &p_bind_ip) {
+	_request_timeout = (uint64_t)_EDITOR_GET("network/debug_adapter/request_timeout");
 	_initialized = true;
 	return server->listen(p_port, p_bind_ip);
 }
