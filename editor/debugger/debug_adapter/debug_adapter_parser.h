@@ -44,7 +44,7 @@ class DebugAdapterParser : public Object {
 private:
 	friend DebugAdapterProtocol;
 
-	_FORCE_INLINE_ bool is_valid_path(const String &p_path) {
+	_FORCE_INLINE_ bool is_valid_path(const String &p_path) const {
 		return p_path.begins_with(ProjectSettings::get_singleton()->get_resource_path());
 	}
 
@@ -60,18 +60,18 @@ protected:
 public:
 	// Requests
 	Dictionary req_initialize(const Dictionary &p_params) const;
-	Dictionary req_launch(const Dictionary &p_params);
+	Dictionary req_launch(const Dictionary &p_params) const;
 	Dictionary req_disconnect(const Dictionary &p_params) const;
-	Dictionary req_attach(const Dictionary &p_params);
-	Dictionary req_restart(const Dictionary &p_params);
+	Dictionary req_attach(const Dictionary &p_params) const;
+	Dictionary req_restart(const Dictionary &p_params) const;
 	Dictionary req_terminate(const Dictionary &p_params) const;
 	Dictionary req_pause(const Dictionary &p_params) const;
 	Dictionary req_continue(const Dictionary &p_params) const;
 	Dictionary req_threads(const Dictionary &p_params) const;
 	Dictionary req_stackTrace(const Dictionary &p_params) const;
-	Dictionary req_setBreakpoints(const Dictionary &p_params);
+	Dictionary req_setBreakpoints(const Dictionary &p_params) const;
 	Dictionary req_breakpointLocations(const Dictionary &p_params) const;
-	Dictionary req_scopes(const Dictionary &p_params);
+	Dictionary req_scopes(const Dictionary &p_params) const;
 	Dictionary req_variables(const Dictionary &p_params) const;
 	Dictionary req_next(const Dictionary &p_params) const;
 	Dictionary req_stepIn(const Dictionary &p_params) const;

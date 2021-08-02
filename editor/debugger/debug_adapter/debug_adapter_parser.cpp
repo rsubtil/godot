@@ -139,7 +139,7 @@ Dictionary DebugAdapterParser::req_disconnect(const Dictionary &p_params) const 
 	return prepare_success_response(p_params);
 }
 
-Dictionary DebugAdapterParser::req_launch(const Dictionary &p_params) {
+Dictionary DebugAdapterParser::req_launch(const Dictionary &p_params) const {
 	Dictionary args = p_params["arguments"];
 	if (args.has("project") && !is_valid_path(args["project"])) {
 		Dictionary variables;
@@ -160,7 +160,7 @@ Dictionary DebugAdapterParser::req_launch(const Dictionary &p_params) {
 	return prepare_success_response(p_params);
 }
 
-Dictionary DebugAdapterParser::req_attach(const Dictionary &p_params) {
+Dictionary DebugAdapterParser::req_attach(const Dictionary &p_params) const {
 	ScriptEditorDebugger *dbg = EditorDebuggerNode::get_singleton()->get_default_debugger();
 	if (!dbg->is_session_active()) {
 		return prepare_error_response(p_params, DAP::ErrorType::NOT_RUNNING);
@@ -171,7 +171,7 @@ Dictionary DebugAdapterParser::req_attach(const Dictionary &p_params) {
 	return prepare_success_response(p_params);
 }
 
-Dictionary DebugAdapterParser::req_restart(const Dictionary &p_params) {
+Dictionary DebugAdapterParser::req_restart(const Dictionary &p_params) const {
 	// Extract embedded "arguments" so it can be given to req_launch/req_attach
 	Dictionary params = p_params, args;
 	args = params["arguments"];
@@ -255,7 +255,7 @@ Dictionary DebugAdapterParser::req_stackTrace(const Dictionary &p_params) const 
 	return response;
 }
 
-Dictionary DebugAdapterParser::req_setBreakpoints(const Dictionary &p_params) {
+Dictionary DebugAdapterParser::req_setBreakpoints(const Dictionary &p_params) const {
 	Dictionary response = prepare_success_response(p_params), body;
 	response["body"] = body;
 
@@ -304,7 +304,7 @@ Dictionary DebugAdapterParser::req_breakpointLocations(const Dictionary &p_param
 	return response;
 }
 
-Dictionary DebugAdapterParser::req_scopes(const Dictionary &p_params) {
+Dictionary DebugAdapterParser::req_scopes(const Dictionary &p_params) const {
 	Dictionary response = prepare_success_response(p_params), body;
 	response["body"] = body;
 
