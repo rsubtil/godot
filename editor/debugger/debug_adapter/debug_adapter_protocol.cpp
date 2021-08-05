@@ -740,6 +740,16 @@ void DebugAdapterProtocol::notify_output(const String &p_message) {
 	}
 }
 
+void DebugAdapterProtocol::notify_custom_data(const String &p_msg, const Array &p_data) {
+	Dictionary event = parser->ev_custom_data(p_msg, p_data);
+	for (List<Ref<DAPeer>>::Element *E = clients.front(); E; E = E->next()) {
+		Ref<DAPeer> peer = E->get();
+		if (peer->supportsCustomData) {
+			peer->res_queue.push_back(event);
+		}
+	}
+}
+
 Array DebugAdapterProtocol::update_breakpoints(const String &p_path, const Array &p_lines) {
 	Array updated_breakpoints;
 
@@ -884,6 +894,15 @@ void DebugAdapterProtocol::on_debug_stack_frame_var(const Array &p_data) {
 	_remaining_vars--;
 }
 
+void DebugAdapterProtocol::on_debug_data(const String &p_msg, const Array &p_data) {
+	// Ignore data that is already handled by DAP
+	if (p_msg == "debug_enter" || p_msg == "debug_exit" || p_msg == "stack_dump" || p_msg == "stack_frame_vars" || p_msg == "stack_frame_var" || p_msg == "output" || p_msg == "request_quit") {
+		return;
+	}
+
+	notify_custom_data(p_msg, p_data);
+}
+
 void DebugAdapterProtocol::poll() {
 	if (server->is_connection_available()) {
 		on_client_connected();
@@ -946,6 +965,7 @@ DebugAdapterProtocol::DebugAdapterProtocol() {
 	debugger_node->get_default_debugger()->connect("stack_dump", callable_mp(this, &DebugAdapterProtocol::on_debug_stack_dump));
 	debugger_node->get_default_debugger()->connect("stack_frame_vars", callable_mp(this, &DebugAdapterProtocol::on_debug_stack_frame_vars));
 	debugger_node->get_default_debugger()->connect("stack_frame_var", callable_mp(this, &DebugAdapterProtocol::on_debug_stack_frame_var));
+	debugger_node->get_default_debugger()->connect("debug_data", callable_mp(this, &DebugAdapterProtocol::on_debug_data));
 }
 
 DebugAdapterProtocol::~DebugAdapterProtocol() {

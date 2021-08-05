@@ -296,6 +296,7 @@ Size2 ScriptEditorDebugger::get_minimum_size() const {
 }
 
 void ScriptEditorDebugger::_parse_message(const String &p_msg, const Array &p_data) {
+	emit_signal(SNAME("debug_data"), p_msg, p_data);
 	if (p_msg == "debug_enter") {
 		_put_msg("get_stack_dump", Array());
 
@@ -1503,6 +1504,7 @@ void ScriptEditorDebugger::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("stack_dump", PropertyInfo(Variant::ARRAY, "stack_dump")));
 	ADD_SIGNAL(MethodInfo("stack_frame_vars", PropertyInfo(Variant::INT, "num_vars")));
 	ADD_SIGNAL(MethodInfo("stack_frame_var", PropertyInfo(Variant::ARRAY, "data")));
+	ADD_SIGNAL(MethodInfo("debug_data", PropertyInfo(Variant::STRING, "msg"), PropertyInfo(Variant::ARRAY, "data")));
 }
 
 void ScriptEditorDebugger::add_debugger_plugin(const Ref<Script> &p_script) {

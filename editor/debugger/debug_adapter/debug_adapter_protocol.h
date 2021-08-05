@@ -59,6 +59,7 @@ struct DAPeer : RefCounted {
 	bool columnsStartAt1 = false;
 	bool supportsVariableType = false;
 	bool supportsInvalidatedEvent = false;
+	bool supportsCustomData = false;
 
 	// Internal client info
 	bool attached = false;
@@ -89,6 +90,7 @@ private:
 	void on_debug_stack_dump(const Array &p_stack_dump);
 	void on_debug_stack_frame_vars(const int &p_size);
 	void on_debug_stack_frame_var(const Array &p_data);
+	void on_debug_data(const String &p_msg, const Array &p_data);
 
 	void reset_current_info();
 	void reset_ids();
@@ -135,6 +137,7 @@ public:
 	void notify_stopped_step();
 	void notify_continued();
 	void notify_output(const String &p_message);
+	void notify_custom_data(const String &p_msg, const Array &p_data);
 
 	Array update_breakpoints(const String &p_path, const Array &p_breakpoints);
 

@@ -76,6 +76,7 @@ public:
 	Dictionary req_next(const Dictionary &p_params) const;
 	Dictionary req_stepIn(const Dictionary &p_params) const;
 	Dictionary req_evaluate(const Dictionary &p_params) const;
+	Dictionary req_godot_put_msg(const Dictionary &p_params) const;
 
 	// Events
 	Dictionary ev_initialized() const;
@@ -88,6 +89,7 @@ public:
 	Dictionary ev_stopped_step() const;
 	Dictionary ev_continued() const;
 	Dictionary ev_output(const String &p_message) const;
+	Dictionary ev_custom_data(const String &p_msg, const Array &p_data) const;
 };
 
 #endif

@@ -54,6 +54,7 @@ void DebugAdapterParser::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("req_next", "params"), &DebugAdapterParser::req_next);
 	ClassDB::bind_method(D_METHOD("req_stepIn", "params"), &DebugAdapterParser::req_stepIn);
 	ClassDB::bind_method(D_METHOD("req_evaluate", "params"), &DebugAdapterParser::req_evaluate);
+	ClassDB::bind_method(D_METHOD("req_godot/put_msg", "params"), &DebugAdapterParser::req_godot_put_msg);
 }
 
 Dictionary DebugAdapterParser::prepare_base_event() const {
@@ -146,6 +147,10 @@ Dictionary DebugAdapterParser::req_launch(const Dictionary &p_params) const {
 		variables["clientPath"] = args["project"];
 		variables["editorPath"] = ProjectSettings::get_singleton()->get_resource_path();
 		return prepare_error_response(p_params, DAP::ErrorType::WRONG_PATH, variables);
+	}
+
+	if (args.has("godot/custom_data")) {
+		DebugAdapterProtocol::get_singleton()->get_current_peer()->supportsCustomData = args["godot/custom_data"];
 	}
 
 	ScriptEditorDebugger *dbg = EditorDebuggerNode::get_singleton()->get_default_debugger();
@@ -399,6 +404,17 @@ Dictionary DebugAdapterParser::req_evaluate(const Dictionary &p_params) const {
 	return response;
 }
 
+Dictionary DebugAdapterParser::req_godot_put_msg(const Dictionary &p_params) const {
+	Dictionary args = p_params["arguments"];
+
+	String msg = args["message"];
+	Array data = args["data"];
+
+	EditorDebuggerNode::get_singleton()->get_default_debugger()->_put_msg(msg, data);
+
+	return prepare_success_response(p_params);
+}
+
 Dictionary DebugAdapterParser::ev_initialized() const {
 	Dictionary event = prepare_base_event();
 	event["event"] = "initialized";
@@ -506,6 +522,17 @@ Dictionary DebugAdapterParser::ev_output(const String &p_message) const {
 
 	body["category"] = "stdout";
 	body["output"] = p_message + "\r\n";
+
+	return event;
+}
+
+Dictionary DebugAdapterParser::ev_custom_data(const String &p_msg, const Array &p_data) const {
+	Dictionary event = prepare_base_event(), body;
+	event["event"] = "godot/custom_data";
+	event["body"] = body;
+
+	body["message"] = p_msg;
+	body["data"] = p_data;
 
 	return event;
 }
