@@ -682,6 +682,7 @@ protected:
 
 protected:
 	friend class FileSystemDock;
+	friend class DebugAdapterParser;
 
 	int get_current_tab();
 	void set_current_tab(int p_tab);

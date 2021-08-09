@@ -40,7 +40,9 @@ enum ErrorType {
 	UNKNOWN,
 	WRONG_PATH,
 	NOT_RUNNING,
-	TIMEOUT
+	TIMEOUT,
+	UNKNOWN_PLATFORM,
+	MISSING_DEVICE
 };
 
 struct Checksum {

@@ -33,6 +33,7 @@
 #include "editor/debugger/editor_debugger_node.h"
 #include "editor/debugger/script_editor_debugger.h"
 #include "editor/editor_node.h"
+#include "editor/editor_run_native.h"
 
 void DebugAdapterParser::_bind_methods() {
 	// Requests
@@ -96,6 +97,14 @@ Dictionary DebugAdapterParser::prepare_error_response(const Dictionary &p_params
 		case DAP::ErrorType::TIMEOUT:
 			error = "timeout";
 			error_desc = "Timeout reached while processing a request.";
+			break;
+		case DAP::ErrorType::UNKNOWN_PLATFORM:
+			error = "unknown_platform";
+			error_desc = "The specified platform is unknown.";
+			break;
+		case DAP::ErrorType::MISSING_DEVICE:
+			error = "missing_device";
+			error_desc = "There's no connected device with specified id.";
 			break;
 		case DAP::ErrorType::UNKNOWN:
 		default:
@@ -175,7 +184,43 @@ Dictionary DebugAdapterParser::req_launch(const Dictionary &p_params) const {
 		dbg->debug_skip_breakpoints();
 	}
 
-	EditorNode::get_singleton()->run_play();
+	String platform_string = args.get("platform", "host");
+	if (platform_string == "host") {
+		EditorNode::get_singleton()->run_play();
+	} else {
+		int device = args.get("device", -1);
+		int idx = -1;
+		if (platform_string == "android") {
+			for (int i = 0; i < EditorExport::get_singleton()->get_export_platform_count(); i++) {
+				if (EditorExport::get_singleton()->get_export_platform(i)->get_name() == "Android") {
+					idx = i;
+					break;
+				}
+			}
+		} else if (platform_string == "web") {
+			for (int i = 0; i < EditorExport::get_singleton()->get_export_platform_count(); i++) {
+				if (EditorExport::get_singleton()->get_export_platform(i)->get_name() == "HTML5") {
+					idx = i;
+					break;
+				}
+			}
+		}
+
+		if (idx == -1) {
+			return prepare_error_response(p_params, DAP::ErrorType::UNKNOWN_PLATFORM);
+		}
+
+		EditorRunNative *native = EditorNode::get_singleton()->run_native;
+		Error err = platform_string == "android" ? native->run_native(device, idx) : native->run_native(-1, idx);
+		if (err) {
+			if (err == ERR_INVALID_PARAMETER && platform_string == "android") {
+				return prepare_error_response(p_params, DAP::ErrorType::MISSING_DEVICE);
+			} else {
+				return prepare_error_response(p_params, DAP::ErrorType::UNKNOWN);
+			}
+		}
+	}
+
 	DebugAdapterProtocol::get_singleton()->get_current_peer()->attached = false;
 	DebugAdapterProtocol::get_singleton()->notify_process();
 
