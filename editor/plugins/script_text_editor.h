@@ -198,6 +198,8 @@ public:
 	virtual void set_syntax_highlighter(Ref<EditorSyntaxHighlighter> p_highlighter) override;
 	void update_toggle_scripts_button();
 
+	CodeTextEditor *get_code_editor();
+
 	virtual void apply_code() override;
 	virtual RES get_edited_resource() const override;
 	virtual void set_edited_resource(const RES &p_res) override;

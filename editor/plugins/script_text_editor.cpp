@@ -882,6 +882,10 @@ void ScriptTextEditor::update_toggle_scripts_button() {
 	}
 }
 
+CodeTextEditor *ScriptTextEditor::get_code_editor() {
+	return code_editor;
+}
+
 void ScriptTextEditor::_update_connected_methods() {
 	CodeEdit *text_edit = code_editor->get_text_editor();
 	text_edit->set_gutter_width(connection_gutter, text_edit->get_line_height());

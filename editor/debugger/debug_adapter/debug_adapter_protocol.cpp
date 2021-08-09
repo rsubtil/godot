@@ -750,25 +750,36 @@ void DebugAdapterProtocol::notify_custom_data(const String &p_msg, const Array &
 	}
 }
 
+void DebugAdapterProtocol::notify_breakpoint(const DAP::Breakpoint &p_breakpoint, const bool &p_enabled) {
+	Dictionary event = parser->ev_breakpoint(p_breakpoint, p_enabled);
+	for (List<Ref<DAPeer>>::Element *E = clients.front(); E; E = E->next()) {
+		if (_current_request == "setBreakpoints" && E->get() == _current_peer) {
+			continue;
+		}
+		E->get()->res_queue.push_back(event);
+	}
+}
+
 Array DebugAdapterProtocol::update_breakpoints(const String &p_path, const Array &p_lines) {
 	Array updated_breakpoints;
 
+	// Add breakpoints
 	for (int i = 0; i < p_lines.size(); i++) {
+		EditorDebuggerNode::get_singleton()->get_default_debugger()->_set_breakpoint(p_path, p_lines[i], true);
 		DAP::Breakpoint breakpoint;
-		breakpoint.verified = true;
-		breakpoint.source.path = p_path;
-		breakpoint.source.compute_checksums();
 		breakpoint.line = p_lines[i];
+		breakpoint.source.path = p_path;
 
-		List<DAP::Breakpoint>::Element *E = breakpoint_list.find(breakpoint);
-		if (E) {
-			breakpoint.id = E->get().id;
-		} else {
-			breakpoint.id = breakpoint_id++;
-			breakpoint_list.push_back(breakpoint);
+		ERR_FAIL_COND_V(!breakpoint_list.find(breakpoint), Array());
+		updated_breakpoints.push_back(breakpoint_list.find(breakpoint)->get().to_json());
+	}
+
+	// Remove breakpoints
+	for (List<DAP::Breakpoint>::Element *E = breakpoint_list.front(); E; E = E->next()) {
+		DAP::Breakpoint b = E->get();
+		if (b.source.path == p_path && !p_lines.has(b.line)) {
+			EditorDebuggerNode::get_singleton()->get_default_debugger()->_set_breakpoint(p_path, b.line, false);
 		}
-
-		updated_breakpoints.push_back(breakpoint.to_json());
 	}
 
 	return updated_breakpoints;
@@ -809,6 +820,29 @@ void DebugAdapterProtocol::on_debug_breaked(const bool &p_reallydid, const bool 
 	}
 
 	_processing_stackdump = p_has_stackdump;
+}
+
+void DebugAdapterProtocol::on_debug_breakpoint_toggled(const String &p_path, const int &p_line, const bool &p_enabled) {
+	DAP::Breakpoint breakpoint;
+	breakpoint.verified = true;
+	breakpoint.source.path = ProjectSettings::get_singleton()->globalize_path(p_path);
+	breakpoint.source.compute_checksums();
+	breakpoint.line = p_line;
+
+	if (p_enabled) {
+		// Add the breakpoint
+		breakpoint.id = breakpoint_id++;
+		breakpoint_list.push_back(breakpoint);
+	} else {
+		// Remove the breakpoint
+		List<DAP::Breakpoint>::Element *E = breakpoint_list.find(breakpoint);
+		if (E) {
+			breakpoint.id = E->get().id;
+			breakpoint_list.erase(E);
+		}
+	}
+
+	notify_breakpoint(breakpoint, p_enabled);
 }
 
 void DebugAdapterProtocol::on_debug_stack_dump(const Array &p_stack_dump) {
@@ -934,6 +968,7 @@ void DebugAdapterProtocol::poll() {
 
 Error DebugAdapterProtocol::start(int p_port, const IPAddress &p_bind_ip) {
 	_request_timeout = (uint64_t)_EDITOR_GET("network/debug_adapter/request_timeout");
+	_sync_breakpoints = (bool)_EDITOR_GET("network/debug_adapter/sync_breakpoints");
 	_initialized = true;
 	return server->listen(p_port, p_bind_ip);
 }
@@ -959,6 +994,8 @@ DebugAdapterProtocol::DebugAdapterProtocol() {
 	node->get_pause_button()->connect("pressed", callable_mp(this, &DebugAdapterProtocol::on_debug_paused));
 
 	EditorDebuggerNode *debugger_node = EditorDebuggerNode::get_singleton();
+	debugger_node->connect("breakpoint_toggled", callable_mp(this, &DebugAdapterProtocol::on_debug_breakpoint_toggled));
+
 	debugger_node->get_default_debugger()->connect("stopped", callable_mp(this, &DebugAdapterProtocol::on_debug_stopped));
 	debugger_node->get_default_debugger()->connect("output", callable_mp(this, &DebugAdapterProtocol::on_debug_output));
 	debugger_node->get_default_debugger()->connect("breaked", callable_mp(this, &DebugAdapterProtocol::on_debug_breaked));

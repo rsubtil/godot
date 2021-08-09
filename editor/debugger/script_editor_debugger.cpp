@@ -873,6 +873,16 @@ void ScriptEditorDebugger::_clear_execution() {
 	inspector->clear_stack_variables();
 }
 
+void ScriptEditorDebugger::_set_breakpoint(const String &p_file, const int &p_line, const bool &p_enabled) {
+	Ref<Script> script = ResourceLoader::load(p_file);
+	emit_signal("set_breakpoint", script, p_line - 1, p_enabled);
+	script.unref();
+}
+
+void ScriptEditorDebugger::_clear_breakpoints() {
+	emit_signal("clear_breakpoints");
+}
+
 void ScriptEditorDebugger::start(Ref<RemoteDebuggerPeer> p_peer) {
 	error_count = 0;
 	warning_count = 0;
@@ -1505,6 +1515,8 @@ void ScriptEditorDebugger::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("stack_frame_vars", PropertyInfo(Variant::INT, "num_vars")));
 	ADD_SIGNAL(MethodInfo("stack_frame_var", PropertyInfo(Variant::ARRAY, "data")));
 	ADD_SIGNAL(MethodInfo("debug_data", PropertyInfo(Variant::STRING, "msg"), PropertyInfo(Variant::ARRAY, "data")));
+	ADD_SIGNAL(MethodInfo("set_breakpoint", PropertyInfo("script"), PropertyInfo(Variant::INT, "line"), PropertyInfo(Variant::BOOL, "enabled")));
+	ADD_SIGNAL(MethodInfo("clear_breakpoints"));
 }
 
 void ScriptEditorDebugger::add_debugger_plugin(const Ref<Script> &p_script) {

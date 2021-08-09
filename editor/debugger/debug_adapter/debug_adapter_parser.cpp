@@ -129,6 +129,23 @@ Dictionary DebugAdapterParser::req_initialize(const Dictionary &p_params) const 
 
 	DebugAdapterProtocol::get_singleton()->notify_initialized();
 
+	if (DebugAdapterProtocol::get_singleton()->_sync_breakpoints) {
+		// Send all current breakpoints
+		List<String> breakpoints;
+		ScriptEditor::get_singleton()->get_breakpoints(&breakpoints);
+		for (List<String>::Element *E = breakpoints.front(); E; E = E->next()) {
+			String breakpoint = E->get();
+
+			String path = breakpoint.left(breakpoint.find(":", 6)); // Skip initial part of path, aka "res://"
+			int line = breakpoint.substr(path.size()).to_int();
+
+			DebugAdapterProtocol::get_singleton()->on_debug_breakpoint_toggled(path, line, true);
+		}
+	} else {
+		// Remove all current breakpoints
+		EditorDebuggerNode::get_singleton()->get_default_debugger()->_clear_breakpoints();
+	}
+
 	return response;
 }
 
@@ -285,7 +302,6 @@ Dictionary DebugAdapterParser::req_setBreakpoints(const Dictionary &p_params) co
 		lines.push_back(breakpoint.line + !lines_at_one);
 	}
 
-	EditorDebuggerNode::get_singleton()->set_breakpoints(ProjectSettings::get_singleton()->localize_path(source.path), lines);
 	Array updated_breakpoints = DebugAdapterProtocol::get_singleton()->update_breakpoints(source.path, lines);
 	body["breakpoints"] = updated_breakpoints;
 
@@ -522,6 +538,17 @@ Dictionary DebugAdapterParser::ev_output(const String &p_message) const {
 
 	body["category"] = "stdout";
 	body["output"] = p_message + "\r\n";
+
+	return event;
+}
+
+Dictionary DebugAdapterParser::ev_breakpoint(const DAP::Breakpoint &p_breakpoint, const bool &p_enabled) const {
+	Dictionary event = prepare_base_event(), body;
+	event["event"] = "breakpoint";
+	event["body"] = body;
+
+	body["reason"] = p_enabled ? "new" : "removed";
+	body["breakpoint"] = p_breakpoint.to_json();
 
 	return event;
 }

@@ -90,6 +90,7 @@ public:
 	Dictionary ev_continued() const;
 	Dictionary ev_output(const String &p_message) const;
 	Dictionary ev_custom_data(const String &p_msg, const Array &p_data) const;
+	Dictionary ev_breakpoint(const DAP::Breakpoint &p_breakpoint, const bool &p_enabled) const;
 };
 
 #endif
