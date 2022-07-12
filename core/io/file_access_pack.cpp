@@ -45,19 +45,67 @@ Error PackedData::add_pack(const String &p_path, bool p_replace_files, uint64_t 
 	return ERR_FILE_UNRECOGNIZED;
 };
 
+Error PackedData::remove_pack(const String &p_path) {
+	if (!is_pack_loaded(p_path)) {
+		return ERR_FILE_UNRECOGNIZED;
+	}
+
+	Vector<PathMD5> reload_packs;
+	for (Map<PathMD5, PackedFile>::Element *E = files.front(); E; E = E->next()) {
+		PackedFile pf = E->value();
+		if (pf.pack.name != p_path) {
+			continue;
+		}
+
+		PathMD5 pmd5 = pf.pack.replaced_pack;
+		if (pmd5.set) {
+			if (reload_packs.find(pmd5) == -1) {
+				reload_packs.push_back(pmd5);
+			}
+		}
+
+		remove_path(pf.filepath);
+		files.erase(E->key());
+		//files.remove(E);
+	}
+	remove_loaded_pack(p_path);
+
+	// For reloading files unloaded by more recent packs, we simply need to reload packs with replace_files disabled
+	for (int i = 0; i < reload_packs.size(); i++) {
+		PathMD5 pmd5 = reload_packs.get(i);
+		if (loaded_packs.find(pmd5) == (void *)-1) {
+			continue;
+		}
+		LoadedPackInfo pack_info = loaded_packs[pmd5];
+		Error err = add_pack(pack_info.name, false, pack_info.offset);
+		if (err) {
+			return err;
+		}
+	}
+
+	return OK;
+}
+
 void PackedData::add_path(const String &p_pkg_path, const String &p_path, uint64_t p_ofs, uint64_t p_size, const uint8_t *p_md5, PackSource *p_src, bool p_replace_files) {
 	PathMD5 pmd5(p_path.md5_buffer());
 
 	bool exists = files.has(pmd5);
 
+	PackInfo pi;
+	pi.name = p_pkg_path;
+	if (p_replace_files && exists) {
+		pi.replaced_pack = PathMD5(files[pmd5].pack.name.md5_buffer());
+	}
+
 	PackedFile pf;
-	pf.pack = p_pkg_path;
+	pf.pack = pi;
 	pf.offset = p_ofs;
 	pf.size = p_size;
 	for (int i = 0; i < 16; i++) {
 		pf.md5[i] = p_md5[i];
 	}
 	pf.src = p_src;
+	pf.filepath = p_path.replace_first("res://", "");
 
 	if (!exists || p_replace_files) {
 		files[pmd5] = pf;
@@ -65,7 +113,7 @@ void PackedData::add_path(const String &p_pkg_path, const String &p_path, uint64
 
 	if (!exists) {
 		//search for dir
-		String p = p_path.replace_first("res://", "");
+		String p = pf.filepath;
 		PackedDir *cd = root;
 
 		if (p.find("/") != -1) { //in a subdir
@@ -90,6 +138,55 @@ void PackedData::add_path(const String &p_pkg_path, const String &p_path, uint64
 			cd->files.insert(filename);
 		}
 	}
+}
+
+void PackedData::remove_path(const String &p_path) {
+	String p = p_path;
+	PackedDir *cd = root;
+
+	if (p.find("/") != -1) {
+		Vector<String> ds = p.get_base_dir().split("/");
+
+		for (int j = 0; j < ds.size(); j++) {
+			if (!cd->subdirs.has(ds[j])) {
+				return;
+			} else {
+				cd = cd->subdirs[ds[j]];
+			}
+		}
+	}
+	String filename = p_path.get_file();
+	cd->files.erase(filename);
+
+	// Clear empty folders
+	while (cd && cd->files.empty() && cd->subdirs.empty()) {
+		String name = cd->name;
+		cd = cd->parent;
+		if (cd) {
+			cd->subdirs.erase(name);
+		}
+	}
+}
+
+void PackedData::add_loaded_pack(const String &p_path, const uint64_t &p_offset) {
+	if (!is_pack_loaded(p_path)) {
+		LoadedPackInfo pack_info;
+		pack_info.name = p_path;
+		pack_info.offset = p_offset;
+
+		PathMD5 pmd5(p_path.md5_buffer());
+		loaded_packs.insert(pmd5, pack_info);
+	}
+}
+
+void PackedData::remove_loaded_pack(const String &p_path) {
+	PathMD5 pmd5(p_path.md5_buffer());
+	loaded_packs.erase(pmd5);
+}
+
+bool PackedData::is_pack_loaded(const String &p_pack_path) const {
+	PathMD5 pmd5(p_pack_path.md5_buffer());
+	return loaded_packs.has(pmd5);
 }
 
 void PackedData::add_pack_source(PackSource *p_source) {
@@ -224,6 +321,8 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 
 	int file_count = f->get_32();
 
+	PackedData::get_singleton()->add_loaded_pack(p_path, p_offset);
+
 	for (int i = 0; i < file_count; i++) {
 		uint32_t sl = f->get_32();
 		CharString cs;
@@ -355,8 +454,8 @@ bool FileAccessPack::file_exists(const String &p_name) {
 
 FileAccessPack::FileAccessPack(const String &p_path, const PackedData::PackedFile &p_file) :
 		pf(p_file),
-		f(FileAccess::open(pf.pack, FileAccess::READ)) {
-	ERR_FAIL_COND_MSG(!f, "Can't open pack-referenced file '" + String(pf.pack) + "'.");
+		f(FileAccess::open(pf.pack.name, FileAccess::READ)) {
+	ERR_FAIL_COND_MSG(!f, "Can't open pack-referenced file '" + String(pf.pack.name) + "'.");
 
 	f->seek(pf.offset);
 	pos = 0;

@@ -139,6 +139,8 @@ protected:
 	void _convert_to_last_version(int p_from_version);
 
 	bool _load_resource_pack(const String &p_pack, bool p_replace_files = true, int p_offset = 0);
+	bool _unload_resource_pack(const String &p_pack);
+	bool _is_pack_loaded(const String &p_pack);
 
 	void _add_property_info_bind(const Dictionary &p_info);
 
@@ -181,11 +183,15 @@ public:
 	Error save();
 	void set_custom_property_info(const String &p_prop, const PropertyInfo &p_info);
 	const Map<StringName, PropertyInfo> &get_custom_property_info() const;
-	uint64_t get_last_saved_time() { return last_save_time; }
+	uint64_t get_last_saved_time() {
+		return last_save_time;
+	}
 
 	Vector<String> get_optimizer_presets() const;
 
-	List<String> get_input_presets() const { return input_presets; }
+	List<String> get_input_presets() const {
+		return input_presets;
+	}
 
 	void set_disable_feature_overrides(bool p_disable);
 
@@ -200,7 +206,9 @@ public:
 	// This is to cope with the situation where a project setting is changed in the iteration AFTER it is read.
 	// There is therefore the potential for a change to be missed. Persisting the counter
 	// for two frames avoids this, at the cost of a frame delay.
-	bool has_changes() const { return _dirty_this_frame == 1; }
+	bool has_changes() const {
+		return _dirty_this_frame == 1;
+	}
 	void update();
 
 	ProjectSettings();
