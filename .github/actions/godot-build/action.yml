@@ -1,6 +1,9 @@
 name: Build Godot
 description: Build Godot with the provided options.
 inputs:
+  root:
+    description: "Root path"
+    default: ""
   target:
     description: The scons target (debug/release_debug/release).
     default: "debug"
@@ -32,6 +35,7 @@ runs:
           SCONSFLAGS: ${{ inputs.sconsflags }}
           SCONS_CACHE: ${{ inputs.scons-cache }}
           SCONS_CACHE_LIMIT: ${{ inputs.scons-cache-limit }}
+      working-directory: ${{ inputs.root }}
       run: |
         echo "Building with flags:" ${{ env.SCONSFLAGS }}
         scons p=${{ inputs.platform }} target=${{ inputs.target }} tools=${{ inputs.tools }} tests=${{ inputs.tests }} ${{ env.SCONSFLAGS }}
