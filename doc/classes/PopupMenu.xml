@@ -481,6 +481,9 @@
 		<member name="max_height" type="float" setter="set_max_height" getter="get_max_height" default="0.0">
 			If non-zero, the [code]PopupMenu[/code] will be resized vertically to that maximum value, showing a scrollbar if the content doesn't fit.
 		</member>
+		<member name="max_item_height" type="int" setter="set_max_item_height" getter="get_max_item_height" default="0">
+			If non-zero, limits the height of each item to the given value in pixels.
+		</member>
 		<member name="submenu_popup_delay" type="float" setter="set_submenu_popup_delay" getter="get_submenu_popup_delay" default="0.3">
 			Sets the delay time in seconds for the submenu item to popup on mouse hovering. If the popup menu is added as a child of another (acting as a submenu), it will inherit the delay time of the parent menu item.
 		</member>

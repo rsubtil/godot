@@ -100,6 +100,7 @@ class PopupMenu : public Popup {
 	int _get_mouse_over(const Point2 &p_over) const;
 	virtual Size2 get_minimum_size() const;
 
+	int _get_item_height(int p_item) const;
 	int _get_items_total_height() const;
 	void _scroll_to_item(int p_item);
 
@@ -130,6 +131,7 @@ class PopupMenu : public Popup {
 	ScrollContainer *scroll_container;
 	Control *control;
 	real_t max_height;
+	int max_item_height;
 
 	void _draw_items();
 	void _draw_background();
@@ -238,6 +240,9 @@ public:
 
 	void set_max_height(real_t p_max_height);
 	real_t get_max_height() const;
+
+	void set_max_item_height(int p_max_height);
+	int get_max_item_height() const;
 
 	virtual void popup(const Rect2 &p_bounds = Rect2());
 

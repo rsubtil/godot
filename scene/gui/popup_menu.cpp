@@ -68,8 +68,13 @@ Size2 PopupMenu::get_minimum_size() const {
 		Size2 size;
 
 		Size2 icon_size = items[i].get_icon_size();
-		size.height = MAX(icon_size.height, font_h);
-		icon_w = MAX(icon_size.width, icon_w);
+		if (max_item_height > 0) {
+			size.height = MAX(MIN(max_item_height, icon_size.height), font_h);
+			icon_w = MAX(size.height * icon_size.width / icon_size.height, icon_w);
+		} else {
+			size.height = MAX(icon_size.height, font_h);
+			icon_w = MAX(icon_size.width, icon_w);
+		}
 
 		size.width += items[i].h_ofs;
 
@@ -107,14 +112,25 @@ Size2 PopupMenu::get_minimum_size() const {
 	return minsize;
 }
 
-int PopupMenu::_get_items_total_height() const {
+int PopupMenu::_get_item_height(int p_item) const {
+	ERR_FAIL_INDEX_V(p_item, items.size(), 0);
+
+	int icon_height = items[p_item].get_icon_size().height;
+	if (max_item_height > 0) {
+		icon_height = MIN(max_item_height, icon_height);
+	}
 	int font_height = get_font("font")->get_height();
+
+	return MAX(icon_height, font_height);
+}
+
+int PopupMenu::_get_items_total_height() const {
 	int vsep = get_constant("vseparation");
 
 	// Get total height of all items by taking max of icon height and font height
 	int items_total_height = 0;
 	for (int i = 0; i < items.size(); i++) {
-		items_total_height += MAX(items[i].get_icon_size().height, font_height) + vsep;
+		items_total_height += _get_item_height(i) + vsep;
 	}
 
 	// Subtract a separator which is not needed for the last item.
@@ -145,7 +161,6 @@ int PopupMenu::_get_mouse_over(const Point2 &p_over) const {
 	Ref<StyleBox> style = get_stylebox("panel"); // Accounts for margin in the margin container
 
 	int vseparation = get_constant("vseparation");
-	float font_h = get_font("font")->get_height();
 
 	Point2 ofs = style->get_offset() + Point2(0, vseparation / 2);
 
@@ -154,7 +169,7 @@ int PopupMenu::_get_mouse_over(const Point2 &p_over) const {
 			ofs.y += vseparation;
 		}
 
-		ofs.y += MAX(items[i].get_icon_size().height, font_h);
+		ofs.y += _get_item_height(i);
 
 		if (p_over.y - control->get_position().y < ofs.y) {
 			return i;
@@ -487,7 +502,12 @@ void PopupMenu::_draw_items() {
 	float icon_ofs = 0.0;
 	bool has_check = false;
 	for (int i = 0; i < items.size(); i++) {
-		icon_ofs = MAX(items[i].get_icon_size().width, icon_ofs);
+		if (max_item_height > 0) {
+			int new_height = MIN(max_item_height, items[i].get_icon_size().height);
+			icon_ofs = MAX(new_height * items[i].get_icon_size().width / items[i].get_icon_size().height, icon_ofs);
+		} else {
+			icon_ofs = MAX(items[i].get_icon_size().width, icon_ofs);
+		}
 
 		if (items[i].checkable_type) {
 			has_check = true;
@@ -510,7 +530,7 @@ void PopupMenu::_draw_items() {
 
 		Point2 item_ofs = ofs;
 		Size2 icon_size = items[i].get_icon_size();
-		float h = MAX(icon_size.height, font_h);
+		float h = _get_item_height(i);
 
 		if (i == mouse_over) {
 			hover->draw(ci, Rect2(item_ofs + Point2(-hseparation, -vseparation / 2), Size2(display_width + hseparation * 2, h + vseparation)));
@@ -548,7 +568,18 @@ void PopupMenu::_draw_items() {
 
 		// Icon
 		if (!items[i].icon.is_null()) {
-			items[i].icon->draw(ci, item_ofs + Size2(check_ofs, 0) + Point2(0, Math::floor((h - icon_size.height) / 2.0)), icon_color);
+			Ref<Texture> icon = items[i].icon;
+			Point2 rect_pos;
+			if (max_item_height > 0)
+				rect_pos = item_ofs + Size2(check_ofs, 0) + Point2(0, Math::floor((h - MIN(max_item_height, icon_size.height)) / 2.0));
+			else
+				rect_pos = item_ofs + Size2(check_ofs, 0) + Point2(0, Math::floor((h - icon_size.height) / 2.0));
+			Size2 rect_size(icon->get_width(), icon->get_height());
+			if (max_item_height > 0 && rect_size.height > max_item_height) {
+				rect_size.height = (max_item_height);
+				rect_size.width = (rect_size.height * rect_size.width) / icon->get_height();
+			}
+			items[i].icon->draw_rect(ci, Rect2(rect_pos, rect_size), false, icon_color);
 		}
 
 		// Submenu arrow on right hand side
@@ -1360,6 +1391,15 @@ real_t PopupMenu::get_max_height() const {
 	return max_height;
 }
 
+void PopupMenu::set_max_item_height(int p_max_item_height) {
+	max_item_height = p_max_item_height;
+	minimum_size_changed();
+}
+
+int PopupMenu::get_max_item_height() const {
+	return max_item_height;
+}
+
 void PopupMenu::set_hide_on_window_lose_focus(bool p_enabled) {
 	hide_on_window_lose_focus = p_enabled;
 }
@@ -1490,6 +1530,9 @@ void PopupMenu::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_max_height", "max_height"), &PopupMenu::set_max_height);
 	ClassDB::bind_method(D_METHOD("get_max_height"), &PopupMenu::get_max_height);
 
+	ClassDB::bind_method(D_METHOD("set_max_item_height", "max_item_height"), &PopupMenu::set_max_item_height);
+	ClassDB::bind_method(D_METHOD("get_max_item_height"), &PopupMenu::get_max_item_height);
+
 	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "items", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL), "_set_items", "_get_items");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "hide_on_item_selection"), "set_hide_on_item_selection", "is_hide_on_item_selection");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "hide_on_checkable_item_selection"), "set_hide_on_checkable_item_selection", "is_hide_on_checkable_item_selection");
@@ -1497,6 +1540,7 @@ void PopupMenu::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "submenu_popup_delay"), "set_submenu_popup_delay", "get_submenu_popup_delay");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "allow_search"), "set_allow_search", "get_allow_search");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "max_height"), "set_max_height", "get_max_height");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "max_item_height"), "set_max_item_height", "get_max_item_height");
 
 	ADD_SIGNAL(MethodInfo("id_pressed", PropertyInfo(Variant::INT, "id")));
 	ADD_SIGNAL(MethodInfo("id_focused", PropertyInfo(Variant::INT, "id")));
@@ -1546,6 +1590,7 @@ PopupMenu::PopupMenu() {
 	search_string = "";
 
 	max_height = 0;
+	max_item_height = 0;
 
 	set_focus_mode(FOCUS_ALL);
 	set_as_toplevel(true);
