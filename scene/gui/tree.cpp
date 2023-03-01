@@ -2042,52 +2042,45 @@ void Tree::popup_select(int p_option) {
 }
 
 void Tree::_go_left() {
-	if (selected_col == 0) {
-		if (selected_item->get_children() != nullptr && !selected_item->is_collapsed()) {
-			selected_item->set_collapsed(true);
-		} else {
-			if (columns.size() == 1) { // goto parent with one column
-				TreeItem *parent = selected_item->get_parent();
-				if (selected_item != get_root() && parent && parent->is_selectable(selected_col) && !(hide_root && parent == get_root())) {
-					select_single_item(parent, get_root(), selected_col);
-				}
-			} else if (selected_item->get_prev_visible()) {
-				selected_col = columns.size() - 1;
-				_go_up(); // go to upper column if possible
-			}
-		}
-	} else {
+	if (selected_col > 0) {
 		if (select_mode == SELECT_MULTI) {
 			selected_col--;
 			emit_signal("cell_selected");
+			accept_event();
 		} else {
-			selected_item->select(selected_col - 1);
+			do {
+				if (selected_item->is_selectable(selected_col - 1)) {
+					selected_item->select(selected_col - 1);
+					accept_event();
+					break;
+				}
+				selected_col--;
+			} while (selected_col > 0);
 		}
 	}
 	update();
-	accept_event();
 	ensure_cursor_is_visible();
 }
 
 void Tree::_go_right() {
-	if (selected_col == (columns.size() - 1)) {
-		if (selected_item->get_children() != nullptr && selected_item->is_collapsed()) {
-			selected_item->set_collapsed(false);
-		} else if (selected_item->get_next_visible()) {
-			selected_col = 0;
-			_go_down();
-		}
-	} else {
+	if (selected_col < (columns.size() - 1)) {
 		if (select_mode == SELECT_MULTI) {
 			selected_col++;
 			emit_signal("cell_selected");
+			accept_event();
 		} else {
-			selected_item->select(selected_col + 1);
+			do {
+				if (selected_item->is_selectable(selected_col + 1)) {
+					selected_item->select(selected_col + 1);
+					accept_event();
+					break;
+				}
+				selected_col++;
+			} while (selected_col < (columns.size() - 1));
 		}
 	}
 	update();
 	ensure_cursor_is_visible();
-	accept_event();
 }
 
 void Tree::_go_up() {
