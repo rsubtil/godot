@@ -424,15 +424,16 @@ Dictionary DebugAdapterParser::req_variables(const Dictionary &p_params) const {
 		return Dictionary();
 	}
 
-	Dictionary response = prepare_success_response(p_params), body;
-	response["body"] = body;
-
 	Dictionary args = p_params["arguments"];
 	int variable_id = args["variablesReference"];
+
+	HashMap<int, ObjectID>::Iterator E = DebugAdapterProtocol::get_singleton()->variable_to_object.find(variable_id);
 
 	HashMap<int, Array>::Iterator E = DebugAdapterProtocol::get_singleton()->variable_list.find(variable_id);
 
 	if (E) {
+		Dictionary response = prepare_success_response(p_params), body;
+		response["body"] = body;
 		if (!DebugAdapterProtocol::get_singleton()->get_current_peer()->supportsVariableType) {
 			for (int i = 0; i < E->value.size(); i++) {
 				Dictionary variable = E->value[i];

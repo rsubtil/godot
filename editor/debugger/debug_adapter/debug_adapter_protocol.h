@@ -92,10 +92,12 @@ private:
 	void on_debug_stack_frame_vars(const int &p_size);
 	void on_debug_stack_frame_var(const Array &p_data);
 	void on_debug_data(const String &p_msg, const Array &p_data);
+	void on_remote_object_updated(const int &p_id) {
 
 	void reset_current_info();
 	void reset_ids();
 	void reset_stack_info();
+	void request_remote_object(int var_id, ObjectID remote_id);
 
 	int parse_variant(const Variant &p_var);
 
@@ -117,6 +119,8 @@ private:
 	List<DAP::Breakpoint> breakpoint_list;
 	HashMap<DAP::StackFrame, List<int>, DAP::StackFrame> stackframe_list;
 	HashMap<int, Array> variable_list;
+	HashMap<ObjectID, int> pending_remote_objects;
+	HashMap<int, ObjectID> lazy_remote_objects;
 
 public:
 	friend class DebugAdapterServer;

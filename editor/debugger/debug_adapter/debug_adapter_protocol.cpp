@@ -33,12 +33,14 @@
 #include "core/config/project_settings.h"
 #include "core/debugger/debugger_marshalls.h"
 #include "core/io/json.h"
+#include "core/io/marshalls.h"
 #include "editor/debugger/script_editor_debugger.h"
 #include "editor/doc_tools.h"
 #include "editor/editor_log.h"
 #include "editor/editor_node.h"
 #include "editor/editor_settings.h"
 #include "editor/gui/editor_run_bar.h"
+#include "scene/debugger/scene_debugger.h"
 
 DebugAdapterProtocol *DebugAdapterProtocol::singleton = nullptr;
 
@@ -186,6 +188,18 @@ void DebugAdapterProtocol::reset_stack_info() {
 
 	stackframe_list.clear();
 	variable_list.clear();
+	pending_remote_objects.clear();
+	lazy_remote_objects.clear();
+}
+
+void DebugAdapterProtocol::request_remote_object(int var_id, ObjectID remote_id) {
+	if(pending_remote_objects.has(remote_id)) {
+		return;
+	}
+	pending_remote_objects[remote_id] = var_id;
+	lazy_remote_objects.erase(var_id);
+
+	EditorDebuggerNode::get_singleton()->get_default_debugger()->request_remote_object(id);
 }
 
 int DebugAdapterProtocol::parse_variant(const Variant &p_var) {
@@ -649,6 +663,11 @@ int DebugAdapterProtocol::parse_variant(const Variant &p_var) {
 			variable_list.insert(id, arr);
 			return id;
 		}
+		case Variant::OBJECT: {
+			int id = variable_id++;
+			request_remote_object(id, Object::cast_to<EncodedObjectAsID>(p_var)->get_object_id());
+			return id;
+		}
 		default:
 			// Simple atomic stuff, or too complex to be manipulated
 			return 0;
@@ -945,15 +964,21 @@ void DebugAdapterProtocol::on_debug_stack_frame_var(const Array &p_data) {
 	int var_id = scope_ids[stack_var.type];
 
 	DAP::Variable variable;
-
+	Variant v = stack_var.value;
 	variable.name = stack_var.name;
-	variable.value = stack_var.value;
-	variable.type = Variant::get_type_name(stack_var.value.get_type());
-	variable.variablesReference = parse_variant(stack_var.value);
+	variable.type = Variant::get_type_name(v.get_type());
+
+	if (stack_var.var_type == Variant::OBJECT && v) {
+		variable.variablesReference = parse_variant(v);
+		pending_remote_objects.insert(variable.variablesReference, id);
+	} else {
+		variable.value = v;
+		variable.variablesReference = parse_variant(v);
+	}
 
 	variable_list.find(var_id)->value.push_back(variable.to_json());
 	_remaining_vars--;
-}
+	}
 
 void DebugAdapterProtocol::on_debug_data(const String &p_msg, const Array &p_data) {
 	// Ignore data that is already handled by DAP
@@ -962,6 +987,19 @@ void DebugAdapterProtocol::on_debug_data(const String &p_msg, const Array &p_dat
 	}
 
 	notify_custom_data(p_msg, p_data);
+}
+
+void DebugAdapterProtocol::on_remote_object_updated(const int &p_id) {
+	if(!pending_remote_objects.has(p_id)) {
+		return;
+	}
+
+	int variable_id = pending_remote_objects[p_id];
+	ERR_FAIL_COND(!variable_list.has(variable_id));
+	pending_remote_objects.erase(p_id);
+
+	DAP::Variable var = variable_list.find(variable_id)->value[0];
+
 }
 
 void DebugAdapterProtocol::poll() {
@@ -1030,6 +1068,7 @@ DebugAdapterProtocol::DebugAdapterProtocol() {
 	debugger_node->get_default_debugger()->connect("stack_frame_vars", callable_mp(this, &DebugAdapterProtocol::on_debug_stack_frame_vars));
 	debugger_node->get_default_debugger()->connect("stack_frame_var", callable_mp(this, &DebugAdapterProtocol::on_debug_stack_frame_var));
 	debugger_node->get_default_debugger()->connect("debug_data", callable_mp(this, &DebugAdapterProtocol::on_debug_data));
+	debugger_node->get_default_debugger()->connect("remote_object_updated", callable_mp(this, &DebugAdapterProtocol::on_remote_object_updated));
 }
 
 DebugAdapterProtocol::~DebugAdapterProtocol() {
